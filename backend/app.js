@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 // CORS - must be first
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:5173'];
+  : ['https://app.netlify.com/projects/blogwebsite55'];
 
 app.use(cors({
   origin: function(origin, callback) {
