@@ -1,0 +1,746 @@
+Blog_post Project API Design and documentation
+Base_URL=localhost:5000/
+
+1. Auth API design
+
+***1.1 create user account (sign up) ***
+Endpoint: POST /api/auth/signup
+Request body:
+
+json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "username": "john_doe",
+  "display_name": "John Doe"
+}
+Success response (201):
+
+json
+
+{
+  "success": true,
+  "message": "User account created successfully",
+  "data": {
+    "user_id": "uuid-string",
+    "email": "user@example.com",
+    "username": "john_doe",
+    "display_name": "John Doe",
+    "avatar": null,
+    "created_at": "2026-01-02T10:00:00Z"
+
+Error responses:
+
+400: Invalid email/password format
+409: Email or username already exists
+***1.2 login user ***
+Endpoint: POST /api/auth/login
+Request body:
+
+json
+1234
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+Success response (200):
+
+json
+123456789101112
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user_id": "uuid-string",
+    "email": "user@example.com",
+    "username": "john_doe",
+    "display_name": "John Doe",
+    "avatar": null,
+    "access_token": "jwt-token-string"
+
+Error responses:
+
+400: Missing email or password
+401: Invalid credentials
+2. Posts API design
+
+***2.1 create new post ***
+Endpoint: POST /api/posts
+Authorization Required: Bearer token
+Request body:
+
+json
+ 45
+{
+  "title": "My First Post",
+  "content": "Post content here...",
+  "topic_id": "uuid-string"
+}
+Success response (201):
+
+json
+  67891011121314
+{
+  "success": true,
+  "message": "Post created successfully",
+  "data": {
+    "post_id": "uuid-string",
+    "title": "My First Post",
+    "content": "Post content here...",
+    "user_id": "uuid-string",
+    "topic_id": "uuid-string",
+    "claps_count": 0,
+
+***2.2 get all posts ***
+Endpoint: GET /api/posts
+Success response (200):
+
+json
+         0
+***2.3 get single post ***
+Endpoint: GET /api/posts/:id
+Success response (200):
+
+json
+      8910111213141516171819
+{
+  "success": true,
+  "message": "Post retrieved successfully",
+  "data": {
+    "post_id": "uuid-string",
+    "title": "...",
+    "content": "...",
+    "author": {
+      "user_id": "...",
+      "username": "...",
+
+***2.4 update post ***
+Endpoint: PUT /api/posts/:id
+Authorization Required: Bearer token
+Request body:
+
+json
+ 5
+{
+  "title": "Updated Post Title",
+  "content": "Updated post content...",
+  "topic_id": "uuid-string"
+}
+Success response (200):
+
+json
+ 7891011
+{
+  "success": true,
+  "message": "Post updated successfully",
+  "data": {
+    "post_id": "uuid-string",
+    "title": "Updated Post Title",
+    "content": "Updated post content...",
+    "topic_id": "uuid-string",
+    "updated_at": "2026-01-02T11:30:00Z"
+  }
+
+Error responses:
+
+400: Missing required fields
+403: User not authorized to edit this post
+404: Post not found
+***2.5 publish draft post ***
+Endpoint: POST /api/posts/:id/publish
+Authorization Required: Bearer token
+Success response (200):
+
+json
+123456789
+{
+  "success": true,
+  "message": "Post published successfully",
+  "data": {
+    "post_id": "uuid-string",
+    "status": "published",
+    "published_at": "2026-01-02T11:35:00Z"
+  }
+}
+Error responses:
+
+403: Not owner of the draft
+404: Draft post not found
+***2.6 delete post ***
+Endpoint: DELETE /api/posts/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+{
+  "success": true,
+  "message": "Post deleted successfully"
+}
+Error responses:
+
+403: User not authorized to delete this post
+404: Post not found
+***2.7 get user feed ***
+Endpoint: GET /api/posts/user/feed
+Authorization Required: Bearer token
+Query params: page=1, limit=10 (optional)
+Success response (200):
+
+json
+12345678910
+{
+  "success": true,
+  "message": "Feed retrieved successfully",
+  "data": {
+    "posts": [ /* array of full post objects with author info */ ],
+    "total": 42,
+    "page": 1,
+    "limit": 10
+  }
+}
+***2.8 get user drafts ***
+Endpoint: GET /api/posts/user/drafts
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Drafts retrieved successfully",
+  "data": {
+    "drafts": [ /* array of draft post objects */ ]
+  }
+}
+***2.9 search posts ***
+Endpoint: GET /api/posts/search
+Query params: q=keyword (required), page=1, limit=10
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Search completed successfully",
+  "data": {
+    "posts": [ /* posts matching keyword */ ],
+    "total": 5
+  }
+}
+Error response:
+
+400: Missing q parameter
+***3.1 create comment ***
+Endpoint: POST /api/comments/:post_id
+Authorization Required: Bearer token
+Request body:
+
+json
+123
+Success response (201):
+
+json
+12345678910111213141516
+{
+  "success": true,
+  "message": "Comment added successfully",
+  "data": {
+    "comment_id": "uuid-string",
+    "content": "Great insights!",
+    "post_id": "uuid-string",
+    "author": {
+      "user_id": "...",
+      "username": "...",
+
+***3.2 get comments for post ***
+Endpoint: GET /api/comments/:post_id
+Query params: page=1, limit=20
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Comments retrieved successfully",
+  "data": {
+    "comments": [ /* comment objects with author */ ],
+    "total": 8
+  }
+}
+***3.3 update comment ***
+Endpoint: PUT /api/comments/:id
+Authorization Required: Bearer token
+Request body: { "content": "Updated comment" }
+Success response (200):
+
+json
+123456789
+{
+  "success": true,
+  "message": "Comment updated successfully",
+  "data": {
+    "comment_id": "uuid-string",
+    "content": "Updated comment",
+    "updated_at": "2026-01-02T12:05:00Z"
+  }
+}
+***3.4 delete comment ***
+Endpoint: DELETE /api/comments/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***3.5 clap comment ***
+Endpoint: POST /api/comments/:id/clap
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Clap added to comment",
+  "data": {
+    "claps_count": 3
+  }
+}
+***4.1 add clap to post ***
+Endpoint: POST /api/claps/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Clap added successfully",
+  "data": {
+    "claps_count": 12
+  }
+}
+***4.2 remove clap from post ***
+Endpoint: DELETE /api/claps/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Clap removed successfully",
+  "data": {
+    "claps_count": 11
+  }
+}
+***4.3 get claps count ***
+Endpoint: GET /api/claps/:id/count
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Claps count retrieved",
+  "data": {
+    "post_id": "uuid-string",
+    "claps_count": 11
+  }
+}
+***4.4 get user clap status ***
+Endpoint: GET /api/claps/:id/user
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Clap status retrieved",
+  "data": {
+    "has_clapped": true
+  }
+}
+***4.5 get clappers list ***
+Endpoint: GET /api/claps/:id/list
+Success response (200):
+
+json
+123456789101112131415
+{
+  "success": true,
+  "message": "Clappers list retrieved",
+  "data": {
+    "clappers": [
+      {
+        "user_id": "...",
+        "username": "...",
+        "display_name": "...",
+        "avatar": "..."
+
+***5.1 add bookmark ***
+Endpoint: POST /api/bookmarks/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+{
+  "success": true,
+  "message": "Post bookmarked successfully"
+}
+***5.2 remove bookmark ***
+Endpoint: DELETE /api/bookmarks/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+{
+  "success": true,
+  "message": "Bookmark removed successfully"
+}
+***5.3 check if bookmarked ***
+Endpoint: GET /api/bookmarks/:id/check
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Bookmark status retrieved",
+  "data": {
+    "bookmarked": true
+  }
+}
+***5.4 get user bookmarks ***
+Endpoint: GET /api/bookmarks
+Authorization Required: Bearer token
+Query params: page=1, limit=10
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Bookmarks retrieved successfully",
+  "data": {
+    "bookmarks": [ /* posts with bookmarked_at */ ],
+    "total": 5
+  }
+}
+***6.1 follow user ***
+Endpoint: POST /api/follow/users/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***6.2 unfollow user ***
+Endpoint: DELETE /api/follow/users/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***6.3 check following status ***
+Endpoint: GET /api/follow/users/:id/check
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+***6.4 get followers ***
+Endpoint: GET /api/follow/users/:id/followers
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Followers retrieved successfully",
+  "data": {
+    "followers": [ /* user objects */ ],
+    "total": 24
+  }
+}
+***6.5 get following ***
+Endpoint: GET /api/follow/users/:id/following
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Following list retrieved successfully",
+  "data": {
+    "following": [ /* user objects */ ],
+    "total": 31
+  }
+}
+***6.6 get follow counts ***
+Endpoint: GET /api/follow/users/:id/counts
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "Follow counts retrieved",
+  "data": {
+    "followers_count": 24,
+    "following_count": 31
+  }
+}
+***6.7 follow topic ***
+Endpoint: POST /api/follow/topics/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***6.8 unfollow topic ***
+Endpoint: DELETE /api/follow/topics/:id
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+{
+  "success": true,
+  "message": "Topic unfollowed successfully"
+}
+***6.9 get followed topics ***
+Endpoint: GET /api/follow/topics/me
+Authorization Required: Bearer token
+Success response (200):
+
+json
+12345678910111213
+{
+  "success": true,
+  "message": "Followed topics retrieved",
+  "data": {
+    "topics": [
+      {
+        "topic_id": "...",
+        "name": "Technology",
+        "slug": "technology"
+      }
+
+***7.1 get notifications ***
+Endpoint: GET /api/notifications
+Authorization Required: Bearer token
+Query params: page=1, limit=20
+Success response (200):
+
+json
+123456789
+{
+  "success": true,
+  "message": "Notifications retrieved",
+  "data": {
+    "notifications": [ /* notification objects */ ],
+    "unread_count": 3,
+    "total": 15
+  }
+}
+***7.2 get unread count ***
+Endpoint: GET /api/notifications/unread-count
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234567
+{
+  "success": true,
+  "message": "Unread count retrieved",
+  "data": {
+    "unread_count": 3
+  }
+}
+***7.3 mark notification as read ***
+Endpoint: PUT /api/notifications/:id/read
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***7.4 mark all as read ***
+Endpoint: PUT /api/notifications/read-all
+Authorization Required: Bearer token
+Success response (200):
+
+json
+1234
+***8.1 get all topics ***
+Endpoint: GET /api/topics
+Success response (200):
+
+json
+1234567
+***8.2 get trending topics ***
+Endpoint: GET /api/topics/trending
+Success response (200):
+
+json
+1234567
+***8.3 get topic by slug ***
+Endpoint: GET /api/topics/:slug
+Success response (200):
+
+json
+1234567891011
+{
+  "success": true,
+  "message": "Topic retrieved successfully",
+  "data": {
+    "topic_id": "...",
+    "name": "JavaScript",
+    "slug": "javascript",
+    "description": "...",
+    "posts_count": 42
+  }
+
+***8.4 get posts by topic ***
+Endpoint: GET /api/topics/:id/posts
+Query params: page=1, limit=10
+Success response (200):
+
+json
+123456789
+{
+  "success": true,
+  "message": "Posts by topic retrieved",
+  "data": {
+    "posts": [ /* post objects */ ],
+    "topic": { "name": "JavaScript", "slug": "javascript" },
+    "total": 42
+  }
+}
+***8.5 create topic ***
+Endpoint: POST /api/topics
+Authorization Required: Bearer token
+Request body:
+
+json
+1234
+{
+  "name": "New Topic",
+  "description": "Description here"
+}
+Success response (201):
+
+json
+12345678910
+***9.1 get user profile ***
+Endpoint: GET /api/users/:id
+Success response (200):
+
+json
+1234567891011121314
+{
+  "success": true,
+  "message": "User profile retrieved",
+  "data": {
+    "user_id": "...",
+    "username": "...",
+    "display_name": "...",
+    "bio": "...",
+    "avatar": "...",
+    "followers_count": 24,
+
+***9.2 get user by username ***
+Endpoint: GET /api/users/username/:username
+Success response (200): same as 9.1
+
+***9.3 get user posts ***
+Endpoint: GET /api/users/:id/posts
+Query params: page=1, limit=10
+Success response (200):
+
+json
+12345678
+{
+  "success": true,
+  "message": "User posts retrieved",
+  "data": {
+    "posts": [ /* post objects */ ],
+    "total": 8
+  }
+}
+***9.4 update user profile ***
+Endpoint: PUT /api/users/:id
+Authorization Required: Bearer token
+Request body:
+
+json
+1234
+{
+  "display_name": "New Display Name",
+  "bio": "Updated bio"
+}
+Success response (200):
+
+json
+123456789
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "user_id": "...",
+    "display_name": "New Display Name",
+    "bio": "Updated bio"
+  }
+}
+***9.5 change password ***
+Endpoint: PUT /api/users/:id/password
+Authorization Required: Bearer token
+Request body:
+
+json
+1234
+{
+  "current_password": "oldpass",
+  "new_password": "newstrongpass"
+}
+Success response (200):
+
+json
+1234
+{
+  "success": true,
+  "message": "Password changed successfully"
+}
+***9.6 get user bookmarks ***
+Endpoint: GET /api/users/:id/bookmarks
+Authorization Required: Bearer token
+Success response (200): same structure as 5.4
+
+***9.7 get user history ***
+Endpoint: GET /api/users/:id/history
+Authorization Required: Bearer token
+Success response (200):
+
+json
+12345678910111213
+{
+  "success": true,
+  "message": "User history retrieved",
+  "data": {
+    "history": [
+      {
+        "post_id": "...",
+        "title": "...",
+        "viewed_at": "2026-01-01T10:00:00Z"
+      }
+
+Error Handling
+All endpoints return consistent errors:
+
+json
+1
+Common codes: 400 (bad input), 401 (unauthorized), 403 (forbidden), 404

@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS topics (
 -- 3️⃣ POSTS TABLE (Enhanced with drafts, status, reading time)
 CREATE TABLE IF NOT EXISTS posts (
   post_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_number SERIAL UNIQUE NOT NULL, -- Auto-incrementing numeric ID
   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   title VARCHAR(200) NOT NULL,
   subtitle VARCHAR(300),
@@ -58,6 +59,9 @@ CREATE TABLE IF NOT EXISTS posts (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add post_number column to existing posts table if it doesn't exist
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS post_number SERIAL UNIQUE;
 
 -- 4️⃣ POST_TOPICS (Many-to-Many)
 CREATE TABLE IF NOT EXISTS post_topics (
@@ -80,6 +84,7 @@ CREATE TABLE IF NOT EXISTS claps (
 -- 6️⃣ COMMENTS TABLE (Threaded)
 CREATE TABLE IF NOT EXISTS comments (
   comment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_number SERIAL UNIQUE NOT NULL, -- Auto-incrementing numeric ID
   post_id UUID NOT NULL REFERENCES posts(post_id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   parent_id UUID REFERENCES comments(comment_id) ON DELETE CASCADE,
@@ -91,6 +96,9 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Add comment_number column to existing comments table if it doesn't exist
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS comment_number SERIAL UNIQUE;
 
 -- 7️⃣ FOLLOWERS TABLE (User follows User)
 CREATE TABLE IF NOT EXISTS followers (

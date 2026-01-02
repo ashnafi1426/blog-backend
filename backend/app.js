@@ -1,61 +1,79 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import router from "./routes/indexRouter.js";
 
-// Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-import router from './routes/indexRouter.js';
+// =====================
+// Load env variables
+// =====================
+console.log("📁 Loading .env from:", `${__dirname}/.env`);
+dotenv.config({ path: `${__dirname}/.env`, debug: true });
+
 const app = express();
 const port = process.env.PORT || 5000;
 
-// CORS - must be first
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:5173', 'https://blogwebsite55.netlify.app'];
+// =====================
+// CORS CONFIG - Allow All Origins
+// =====================
+const corsOptions = {
+  origin: "*",
+  credentials: false,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+console.log("✅ CORS: Allowing all origins");
 
-// Raw body logging for debugging
+// ✅ CORS FIRST (this handles OPTIONS automatically)
+app.use(cors(corsOptions));
+
+// =====================
+// Logger
+// =====================
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  console.log(`${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
+// =====================
+// Body Parsers
+// =====================
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// =====================
 // Routes
-app.use('/api', router);
+// =====================
+app.use("/api", router);
 
-// JSON parse error handler
+// =====================
+// JSON Error Handler
+// =====================
 app.use((err, req, res, next) => {
-  console.error('Error caught:', err.message);
-  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    console.error('Invalid JSON body received');
-    return res.status(400).json({ message: 'Invalid JSON in request body' });
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({ message: "Invalid JSON body" });
   }
   next(err);
 });
 
-// General error handler
+// =====================
+// Global Error Handler
+// =====================
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ message: err.message || 'Internal server error' });
+  console.error("🔥 Error:", err.message);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+  });
 });
 
+// =====================
+// Start Server
+// =====================
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });

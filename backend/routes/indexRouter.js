@@ -1,14 +1,14 @@
 import express from "express";
-import signupRouter from "./signupRouter.js";
-import loginRouter from "./loginRouter.js";
-import postRoutes from "./postRoutes.js";
-import commentRoutes from "./commentRoutes.js";
-import clapsRoutes from "./clapsRoutes.js";
-import usersRoutes from "./usersRoutes.js";
-import followRoutes from "./followRoutes.js";
-import bookmarkRoutes from "./bookmarkRoutes.js";
-import notificationRoutes from "./notificationRoutes.js";
-import topicRoutes from "./topicRoutes.js";
+import signupRouter from "./signupRouter/signupRouter.js";
+import loginRouter from "./loginRouter/loginRouter.js";
+import postRoutes from "./postRoutes/postRoutes.js";
+import commentRoutes from "./commentRoutes/commentRoutes.js";
+import clapsRoutes from "./clapsRoutes/clapsRoutes.js";
+import usersRoutes from "./usersRoutes/usersRoutes.js";
+import followRoutes from "./followRoutes/followRoutes.js";
+import bookmarkRoutes from "./bookmarkRoutes/bookmarkRoutes.js";
+import notificationRoutes from "./notificationRoutes/notificationRoutes.js";
+import topicRoutes from "./topicRoutes/topicRoutes.js";
 
 const router = express.Router();
 
