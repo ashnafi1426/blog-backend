@@ -7,6 +7,7 @@
 -- 1️⃣ USERS TABLE (Enhanced)
 CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_number SERIAL UNIQUE NOT NULL, -- Auto-incrementing numeric ID
   username VARCHAR(50) UNIQUE NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   password VARCHAR(255),
@@ -25,6 +26,9 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(oauth_provider, oauth_id)
 );
+
+-- Add user_number column to existing users table if it doesn't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS user_number SERIAL UNIQUE;
 
 -- 2️⃣ TOPICS TABLE (Categories/Tags users can follow)
 CREATE TABLE IF NOT EXISTS topics (

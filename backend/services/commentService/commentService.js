@@ -1,4 +1,5 @@
 import { supabase } from "../../config/supabaseClient.js";
+import { resolvePostId } from "../../utils/idResolver.js";
 
 // Create comment (supports threaded replies)
 export const createCommentService = async (postId, userId, content, parentId = null) => {
@@ -6,10 +7,13 @@ export const createCommentService = async (postId, userId, content, parentId = n
   if (!postId) throw new Error("Post ID is required");
   if (!content?.trim()) throw new Error("Content is required");
 
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+
   const { data, error } = await supabase
     .from("comments")
     .insert([{ 
-      post_id: postId, 
+      post_id: actualPostId, 
       user_id: userId, 
       content: content.trim(),
       parent_id: parentId 
@@ -21,10 +25,10 @@ export const createCommentService = async (postId, userId, content, parentId = n
     .single();
   if (error) throw new Error(error.message);
   // Update post comments count
-  await updatePostCommentsCount(postId);
+  await updatePostCommentsCount(actualPostId);
   
   // Create notification for post author
-  await createCommentNotification(postId, userId, data.comment_id, parentId);
+  await createCommentNotification(actualPostId, userId, data.comment_id, parentId);
 
   return data;
 };
@@ -35,6 +39,9 @@ export const getCommentsByPostService = async (postId, { page = 1, limit = 20 } 
 
   const from = (page - 1) * limit;
 
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   // Get top-level comments
   const { data: comments, error } = await supabase
     .from("comments")
@@ -42,7 +49,7 @@ export const getCommentsByPostService = async (postId, { page = 1, limit = 20 } 
       *,
       users(user_id, username, display_name, avatar)
     `)
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .is("parent_id", null)
     .order("comment_number", { ascending: true })
     .range(from, from + limit - 1);

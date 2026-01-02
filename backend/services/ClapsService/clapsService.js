@@ -1,12 +1,16 @@
 import { supabase } from "../../config/supabaseClient.js";
+import { resolvePostId } from "../../utils/idResolver.js";
 
 // Add claps (Medium style - up to 50 per user per post)
 export const addClapsService = async (postId, userId, count = 1) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   // Get existing claps
   const { data: existing } = await supabase
     .from("claps")
     .select("*")
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -30,17 +34,17 @@ export const addClapsService = async (postId, userId, count = 1) => {
     newCount = Math.min(count, 50);
     const { error } = await supabase
       .from("claps")
-      .insert([{ post_id: postId, user_id: userId, count: newCount }]);
+      .insert([{ post_id: actualPostId, user_id: userId, count: newCount }]);
     
     if (error) throw new Error(error.message);
   }
 
   // Update post claps count
-  await updatePostClapsCount(postId);
+  await updatePostClapsCount(actualPostId);
   
   // Create notification in database only on first clap
   if (isFirstClap) {
-    await createClapNotification(postId, userId);
+    await createClapNotification(actualPostId, userId);
   }
   
   return { count: newCount };
@@ -48,26 +52,32 @@ export const addClapsService = async (postId, userId, count = 1) => {
 
 // Remove all claps from a post
 export const removeClapsService = async (postId, userId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("claps")
     .delete()
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .eq("user_id", userId)
     .select()
     .maybeSingle();
 
   if (error) throw new Error(error.message);
   
-  await updatePostClapsCount(postId);
+  await updatePostClapsCount(actualPostId);
   return data;
 };
 
 // Get total claps for a post
 export const getClapsCountService = async (postId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("claps")
     .select("count")
-    .eq("post_id", postId);
+    .eq("post_id", actualPostId);
 
   if (error) throw new Error(error.message);
   
@@ -77,10 +87,13 @@ export const getClapsCountService = async (postId) => {
 
 // Get user's claps on a post
 export const getUserClapsService = async (postId, userId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("claps")
     .select("count")
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -90,13 +103,16 @@ export const getUserClapsService = async (postId, userId) => {
 
 // Get list of users who clapped
 export const getClappersListService = async (postId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("claps")
     .select(`
       count,
       users(user_id, username, display_name, avatar)
     `)
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .order("count", { ascending: false });
 
   if (error) throw new Error(error.message);

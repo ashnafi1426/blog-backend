@@ -18,7 +18,6 @@ json
 Success response (201):
 
 json
-
 {
   "success": true,
   "message": "User account created successfully",

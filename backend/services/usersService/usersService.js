@@ -1,8 +1,12 @@
 import { supabase } from "../../config/supabaseClient.js";
+import { resolveUserId } from "../../utils/idResolver.js";
 import bcrypt from "bcryptjs";
 
 // Fetch user profile by user_id
 export const fetchUserProfile = async (userId) => {
+  // Resolve the user ID (could be UUID, username, or numeric)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const { data, error } = await supabase
     .from("users")
     .select(`
@@ -17,7 +21,7 @@ export const fetchUserProfile = async (userId) => {
       is_premium,
       created_at
     `)
-    .eq("user_id", userId)
+    .eq("user_id", resolvedUserId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
@@ -27,18 +31,18 @@ export const fetchUserProfile = async (userId) => {
   const { count: followersCount } = await supabase
     .from("followers")
     .select("*", { count: "exact", head: true })
-    .eq("following_id", userId);
+    .eq("following_id", resolvedUserId);
 
   const { count: followingCount } = await supabase
     .from("followers")
     .select("*", { count: "exact", head: true })
-    .eq("follower_id", userId);
+    .eq("follower_id", resolvedUserId);
 
   // Get posts count and stats
   const { data: posts } = await supabase
     .from("posts")
     .select("views_count, claps_count, comments_count")
-    .eq("user_id", userId)
+    .eq("user_id", resolvedUserId)
     .eq("status", "published");
 
   const postsCount = posts?.length || 0;
@@ -100,6 +104,9 @@ export const fetchUserByUsername = async (username) => {
 
 // Fetch posts by user
 export const fetchUserPosts = async (userId, { page = 1, limit = 10, status = 'published' } = {}) => {
+  // Resolve the user ID (could be UUID, username, or numeric)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const from = (page - 1) * limit;
 
   let query = supabase
@@ -108,7 +115,7 @@ export const fetchUserPosts = async (userId, { page = 1, limit = 10, status = 'p
       *,
       post_topics(topic_id, topics(name, slug))
     `)
-    .eq("user_id", userId)
+    .eq("user_id", resolvedUserId)
     .order("post_number", { ascending: false })
     .range(from, from + limit - 1);
 
@@ -123,6 +130,9 @@ export const fetchUserPosts = async (userId, { page = 1, limit = 10, status = 'p
 
 // Update user profile
 export const updateUserProfile = async (userId, updates) => {
+  // Resolve the user ID (could be UUID, username, or numeric)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const allowedFields = ['username', 'display_name', 'firstname', 'lastname', 'avatar', 'bio'];
   const updateData = {};
   
@@ -137,7 +147,7 @@ export const updateUserProfile = async (userId, updates) => {
     const { data } = await supabase
       .from("users")
       .select()
-      .eq("user_id", userId)
+      .eq("user_id", resolvedUserId)
       .single();
     return data;
   }
@@ -149,7 +159,7 @@ export const updateUserProfile = async (userId, updates) => {
   const { data, error } = await supabase
     .from("users")
     .update(updateData)
-    .eq("user_id", userId)
+    .eq("user_id", resolvedUserId)
     .select()
     .single();
 

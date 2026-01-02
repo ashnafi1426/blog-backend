@@ -1,14 +1,18 @@
 import { supabase } from "../../config/supabaseClient.js";
+import { resolveUserId } from "../../utils/idResolver.js";
 
 // Follow a user
 export const followUserService = async (followerId, followingId) => {
-  if (followerId === followingId) {
+  // Resolve the following user ID (could be UUID or username)
+  const resolvedFollowingId = await resolveUserId(followingId);
+  
+  if (followerId === resolvedFollowingId) {
     throw new Error("Cannot follow yourself");
   }
 
   const { data, error } = await supabase
     .from("followers")
-    .insert([{ follower_id: followerId, following_id: followingId }])
+    .insert([{ follower_id: followerId, following_id: resolvedFollowingId }])
     .select()
     .single();
 
@@ -18,18 +22,21 @@ export const followUserService = async (followerId, followingId) => {
   }
 
   // Create notification
-  await createFollowNotification(followerId, followingId);
+  await createFollowNotification(followerId, resolvedFollowingId);
   
   return data;
 };
 
 // Unfollow a user
 export const unfollowUserService = async (followerId, followingId) => {
+  // Resolve the following user ID (could be UUID or username)
+  const resolvedFollowingId = await resolveUserId(followingId);
+  
   const { data, error } = await supabase
     .from("followers")
     .delete()
     .eq("follower_id", followerId)
-    .eq("following_id", followingId)
+    .eq("following_id", resolvedFollowingId)
     .select()
     .maybeSingle();
 
@@ -39,11 +46,14 @@ export const unfollowUserService = async (followerId, followingId) => {
 
 // Check if following
 export const isFollowingService = async (followerId, followingId) => {
+  // Resolve the following user ID (could be UUID or username)
+  const resolvedFollowingId = await resolveUserId(followingId);
+  
   const { data } = await supabase
     .from("followers")
     .select("*")
     .eq("follower_id", followerId)
-    .eq("following_id", followingId)
+    .eq("following_id", resolvedFollowingId)
     .maybeSingle();
 
   return !!data;
@@ -51,6 +61,9 @@ export const isFollowingService = async (followerId, followingId) => {
 
 // Get followers of a user
 export const getFollowersService = async (userId, { page = 1, limit = 20 } = {}) => {
+  // Resolve the user ID (could be UUID or username)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const from = (page - 1) * limit;
   
   const { data, error } = await supabase
@@ -59,7 +72,7 @@ export const getFollowersService = async (userId, { page = 1, limit = 20 } = {})
       created_at,
       follower:users!followers_follower_id_fkey(user_id, username, display_name, avatar, bio)
     `)
-    .eq("following_id", userId)
+    .eq("following_id", resolvedUserId)
     .order("created_at", { ascending: false })
     .range(from, from + limit - 1);
 
@@ -69,6 +82,9 @@ export const getFollowersService = async (userId, { page = 1, limit = 20 } = {})
 
 // Get users that a user is following
 export const getFollowingService = async (userId, { page = 1, limit = 20 } = {}) => {
+  // Resolve the user ID (could be UUID or username)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const from = (page - 1) * limit;
   
   const { data, error } = await supabase
@@ -77,7 +93,7 @@ export const getFollowingService = async (userId, { page = 1, limit = 20 } = {})
       created_at,
       following:users!followers_following_id_fkey(user_id, username, display_name, avatar, bio)
     `)
-    .eq("follower_id", userId)
+    .eq("follower_id", resolvedUserId)
     .order("created_at", { ascending: false })
     .range(from, from + limit - 1);
 
@@ -87,15 +103,18 @@ export const getFollowingService = async (userId, { page = 1, limit = 20 } = {})
 
 // Get follower/following counts
 export const getFollowCountsService = async (userId) => {
+  // Resolve the user ID (could be UUID or username)
+  const resolvedUserId = await resolveUserId(userId);
+  
   const { count: followersCount } = await supabase
     .from("followers")
     .select("*", { count: "exact", head: true })
-    .eq("following_id", userId);
+    .eq("following_id", resolvedUserId);
 
   const { count: followingCount } = await supabase
     .from("followers")
     .select("*", { count: "exact", head: true })
-    .eq("follower_id", userId);
+    .eq("follower_id", resolvedUserId);
 
   return {
     followers: followersCount || 0,

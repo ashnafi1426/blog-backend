@@ -1,10 +1,14 @@
 import { supabase } from "../../config/supabaseClient.js";
+import { resolvePostId } from "../../utils/idResolver.js";
 
 // Add bookmark
 export const addBookmarkService = async (userId, postId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("bookmarks")
-    .insert([{ user_id: userId, post_id: postId }])
+    .insert([{ user_id: userId, post_id: actualPostId }])
     .select()
     .single();
 
@@ -17,11 +21,14 @@ export const addBookmarkService = async (userId, postId) => {
 
 // Remove bookmark
 export const removeBookmarkService = async (userId, postId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data, error } = await supabase
     .from("bookmarks")
     .delete()
     .eq("user_id", userId)
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .select()
     .maybeSingle();
 
@@ -31,11 +38,14 @@ export const removeBookmarkService = async (userId, postId) => {
 
 // Check if bookmarked
 export const isBookmarkedService = async (userId, postId) => {
+  // Resolve post ID (handles both UUID and numeric)
+  const actualPostId = await resolvePostId(postId);
+  
   const { data } = await supabase
     .from("bookmarks")
     .select("*")
     .eq("user_id", userId)
-    .eq("post_id", postId)
+    .eq("post_id", actualPostId)
     .maybeSingle();
 
   return !!data;
